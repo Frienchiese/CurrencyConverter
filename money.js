@@ -35,7 +35,11 @@ const currencies = {
 
 const fromCurrency = document.querySelector('[name="from_currency"]');
 const toCurrency = document.querySelector('[name="to_currency"]');
-const endpoint = 'https://api.exchangeratesapi.io/latest';
+const fromAmount = document.querySelector('[name="from_amount"]');
+const toAmount = document.querySelector('.to_amount');
+const endpoint = 'https://api.exchangerate.host/convert';
+const form = document.querySelector('.app form');
+const ratesByBase = {};
 
 function generateOptions(options) {
   return Object.entries(options)
@@ -46,13 +50,34 @@ function generateOptions(options) {
     .join('');
 }
 
-async function fetchData(base = 'USD') {
-  const response = await fetch(`${endpoint}?base=${base}`);
+async function fetchData(from, to) {
+  const response = await fetch(`${endpoint}?from=${from}&to=${to}`);
   const data = await response.json();
-  console.log(data);
+  //console.log(data.result);
+  return data.result;
+}
+
+async function convert(from, to, amount) {
+  const rate = await fetchData(from, to);
+  const convertedAmount = rate * amount;
+  return convertedAmount;
+}
+
+function formatCurrency(amount, currency) {
+  return Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+  }).format(amount);
+}
+
+async function handleInput(e) {
+  const amount = fromAmount.value;
+  const rawAmount = await convert(fromCurrency.value, toCurrency.value, amount);
+  toAmount.textContent = formatCurrency(rawAmount, toCurrency.value);
 }
 
 const optionsHTML = generateOptions(currencies);
 fromCurrency.innerHTML = optionsHTML;
 toCurrency.innerHTML = optionsHTML;
-fetchData();
+form.addEventListener('input', handleInput);
+//fetchData();
